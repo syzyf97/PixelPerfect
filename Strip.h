@@ -43,8 +43,7 @@ namespace pix
   class StripTemplate final : public StripInterface
   {
   public:
-    StripTemplate() : StripInterface(255) {}
-    StripTemplate(uint8_t pin, bool reverse = false)
+    StripTemplate(uint8_t pin = 255, bool reverse = false)
     : StripInterface{pin, reverse} {}
     uint16_t length() const override final { return len; }
   
