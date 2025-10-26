@@ -36,11 +36,13 @@ namespace pix
   {
   public:
     StripGroup() : StripGroupInterface() {};
-    StripGroup(const StripHandler (&s)[STRIP_COUNT]) : StripGroupInterface()
+    template<uint8_t _LOCAL_STRIP_COUNT>
+    StripGroup(const StripHandler (&s)[_LOCAL_STRIP_COUNT]) : StripGroupInterface()
     {
       for (uint8_t i = 0; i < STRIP_COUNT; ++i)
       {
-        strips[i] = s[i];
+        if (i < _LOCAL_STRIP_COUNT) strips[i] = s[i];
+        else strips[i] = nullptr;
       }
     }
     ~StripGroup() override {}
