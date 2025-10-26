@@ -169,12 +169,11 @@ pix::StripAllocate(uint16_t pixelCount, uint8_t pin = 255, bool reverse = false)
 
 ### Begin
 
+Initialize specified pin as output.
+
 ```cpp
 void pix::Strip::begin(void);
 ```
-| Description |
-| :--- | 
-|  Initialize pin as output |
 
 ### Get reference to led
 
