@@ -146,7 +146,7 @@ namespace pix
   {
   public:
     StripAllocate();
-    StripAllocate(uint16_t pixelCount, uint8_t pin, bool reverse = false);
+    StripAllocate(uint16_t pixelCount, uint8_t pin = 255, bool reverse = false);
     ~StripAllocate() override;
     uint16_t length() const override;
     void clear(void) override;
