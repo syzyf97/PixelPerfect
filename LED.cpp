@@ -73,7 +73,11 @@ namespace pix
 
   static uint8_t gamma8(uint8_t i)
   {
+    #ifndef DISABLE_GAMMA_LUT
     return pgm_read_byte(&__GAMMA8_TABLE[i]);
+    #else
+    return 255 * pow((i / 255), 0.357142857);
+    #endif
   }
 
   Color& gamma32(Color& color)
@@ -181,6 +185,7 @@ namespace pix
 
   Color kelvin(uint16_t temp)
   {
+  #ifndef DISABLE_KELVIN_LUT
     uint8_t index;
     if (temp <= _COLOR_TEMP_MIN) index = 0;
     else if (temp >= _COLOR_TEMP_MAX) index = _COLOR_TEMP_TABLE_SIZE - 1;
@@ -190,6 +195,30 @@ namespace pix
       pgm_read_byte(&__COLOR_TEMP_TABLE[index][1]),
       pgm_read_byte(&__COLOR_TEMP_TABLE[index][2]),
     };
+  #else
+    const float tempf = temp / 100;
+    Color rgb;
+    if (tempf <= 66) {
+      rgb.r = 255;
+      rgb.g = 99.4708025861 * log(tempf) - 161.1195681661;
+    }
+    else {
+      rgb.r = tempf - 60;
+      rgb.r = 329.698727466 * pow(rgb.r, -0.1332047592);
+      r = constrain(rgb.r, 0, 255);
+      rgb.g = tempf - 60;
+      rgb.g = 288.1221695283 * pow(rgb.g, -0.0755148492);
+    }
+    g = constrain(rgb.g, 0, 255);
+    
+    if (tempf >= 66) rgb.b = 255;
+    else if (tempf <= 19) rgb.b = 0;
+    else {
+      b = 138.5177312231 * log(tempf - 10) - 305.0447927307;
+      b = constrain(rgb.b, 0, 255);
+    }
+    return rgb;
+  #endif
   }
 
 }

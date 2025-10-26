@@ -5,9 +5,9 @@
 
 namespace pix {
 
-  class LedStripEffectInterface {
+  class EffectStripInterface {
     public:
-      virtual ~LedStripEffectInterface() = default;
+      virtual ~EffectStripInterface() = default;
       virtual void update() = 0;
       virtual void start() = 0;
       virtual void stop() = 0;

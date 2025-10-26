@@ -3,6 +3,9 @@
 
 #include "Arduino.h"
 
+
+#ifndef DISABLE_KELVIN_LUT
+
 constexpr uint16_t _COLOR_TEMP_MIN = 520;
 constexpr uint16_t _COLOR_TEMP_MAX = 10000;
 constexpr uint16_t _COLOR_TEMP_TABLE_SIZE = 256;
@@ -96,4 +99,5 @@ const uint8_t PROGMEM __COLOR_TEMP_TABLE[][3] = {
   { 204, 217, 254 }, /*c=255, T=10000*/ 
 };
 
-#endif
+#endif // DISABLE_KELVIN_LUT
+#endif // _COLOR_TEMP_TABLE_H
