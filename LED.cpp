@@ -9,8 +9,6 @@ namespace pix
 
   LED::LED(uint8_t r, uint8_t g, uint8_t b) : g{g}, r{r}, b{b} {}
 
-  LED::LED() : LED(0u) {}
-
   uint8_t& LED::operator[](uint8_t index)
   {
     static uint8_t void_part = 0u;

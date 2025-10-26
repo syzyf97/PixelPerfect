@@ -7,8 +7,7 @@ namespace pix {
   
   struct __attribute__((packed)) LED {
     LED(uint32_t color);
-    LED(uint8_t r, uint8_t g, uint8_t b);
-    LED();
+    LED(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
     uint8_t g;
     uint8_t r;
     uint8_t b;
