@@ -13,6 +13,7 @@ namespace pix
     : brightness{120}, pin{pin}, reverse{reverse}, timer{0ul} {}
     virtual ~StripInterface() = default;
     uint8_t brightness;
+    bool reverse;
     virtual uint16_t length() const = 0;
     virtual void clear(void) = 0;
     void begin(void) { pix::begin(pin); }
@@ -28,12 +29,9 @@ namespace pix
     virtual const LED& led(uint16_t i) const = 0;
     inline void setPin(uint8_t p) { pin = p; }
     inline uint8_t getPin(void) const { return pin; }
-    inline bool isReverse(void) const { return reverse; }
-    inline void setReverse(bool r) { reverse = r; }
-    
+
   protected:
     uint8_t pin;
-    bool reverse;
     uint32_t timer;
   };
 
