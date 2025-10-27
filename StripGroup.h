@@ -12,6 +12,7 @@ namespace pix
     virtual ~StripGroupInterface() = default;
     uint8_t brightness;
     virtual uint32_t length() const = 0;
+    virtual uint32_t recalcLength() const = 0;
     virtual void begin(void) = 0;
     virtual void clear(void) = 0;
     virtual void show(void) = 0;
@@ -47,12 +48,17 @@ namespace pix
 
     uint32_t length() const override
     {
-      uint32_t l = 0ul;
-      for (uint8_t i = 0; i < STRIP_COUNT; ++i)
+      return len;
+    }
+
+    uint32_t recalcLength(void)
+    {
+      len = 0UL;
+      for (uint8_t i = 0; i < STRIP_COUNT; ++i) 
       {
-        if (strips[i]) l += strips[i]->length();
+        if (strips[i]) len += strips[i]->length();
       }
-      return l;
+      return len;
     }
 
     void begin(void) override
@@ -217,6 +223,7 @@ namespace pix
 
   private:
     StripHandler strips[STRIP_COUNT];
+    uint32_t len;
   };
 }
 
