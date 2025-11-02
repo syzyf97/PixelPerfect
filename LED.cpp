@@ -91,43 +91,43 @@ namespace pix
     return color;
   }
 
-  void fill(LED* leds, uint16_t len, uint32_t color)
+  void fill(LED* leds, range_t len, uint32_t color)
   {
     if (leds == nullptr) return;
-    for (uint16_t i = 0; i < len; ++i) leds[i] = color;
+    for (range_t i = 0; i < len; ++i) leds[i] = color;
   }
 
-  void fill(LED* leds, uint16_t len, const Color& color)
+  void fill(LED* leds, range_t len, const Color& color)
   {
     if (leds == nullptr) return;
-    for (uint16_t i = 0; i < len; ++i) leds[i] = color;
+    for (range_t i = 0; i < len; ++i) leds[i] = color;
   }
 
-  void fill(LED* leds, uint16_t len, uint8_t r, uint8_t g, uint8_t b)
+  void fill(LED* leds, range_t len, uint8_t r, uint8_t g, uint8_t b)
   {
     if (leds == nullptr) return;
-    for (uint16_t i = 0; i < len; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b;
+    for (range_t i = 0; i < len; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b;
   }
 
-  void fillFromTo(LED* leds, uint16_t len, uint32_t color, uint16_t from, uint16_t to)
+  void fillFromTo(LED* leds, range_t len, uint32_t color, range_t from, range_t to)
   {
     if (leds == nullptr || from > to || to >= len) return;
-    for (uint16_t i = from; i <= to; ++i) leds[i] = color;
+    for (range_t i = from; i <= to; ++i) leds[i] = color;
   }
 
-  void fillFromTo(LED* leds, uint16_t len, const Color& color, uint16_t from, uint16_t to)
+  void fillFromTo(LED* leds, range_t len, const Color& color, range_t from, range_t to)
   {
     if (leds == nullptr || from > to || to >= len) return;
-    for (uint16_t i = from; i <= to; ++i) leds[i] = color;
+    for (range_t i = from; i <= to; ++i) leds[i] = color;
   }
 
-  void fillFromTo(LED* leds, uint16_t len, uint8_t r, uint8_t g, uint8_t b, uint16_t from, uint16_t to)
+  void fillFromTo(LED* leds, range_t len, uint8_t r, uint8_t g, uint8_t b, range_t from, range_t to)
   {
     if (leds == nullptr || from > to || to >= len) return;
-    for (uint16_t i = from; i <= to; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b;
+    for (range_t i = from; i <= to; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b;
   }
 
-  void clear(LED* leds, uint16_t len)
+  void clear(LED* leds, range_t len)
   {
     if (leds == nullptr) return;
     memset((uint8_t*)leds, 0, len * 3);

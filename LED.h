@@ -5,6 +5,12 @@
 
 namespace pix {
   
+#ifdef AVR
+  using range_t = uint16_t; 
+#else
+  using range_t = uint32_t;
+#endif
+
   struct __attribute__((packed)) LED {
     LED(uint32_t color);
     LED(uint8_t r = 0, uint8_t g = 0, uint8_t b = 0);
@@ -30,25 +36,25 @@ namespace pix {
 
   void begin(uint8_t pin);
 
-  void clear(LED* leds, uint16_t len);
+  void clear(LED* leds, range_t len);
 
-  void fill(LED* leds, uint16_t len, uint32_t color);
+  void fill(LED* leds, range_t len, uint32_t color);
 
-  void fill(LED* leds, uint16_t len, const Color& color);
+  void fill(LED* leds, range_t len, const Color& color);
 
-  void fill(LED* leds, uint16_t len, uint8_t r, uint8_t g, uint8_t b);
+  void fill(LED* leds, range_t len, uint8_t r, uint8_t g, uint8_t b);
 
-  void fillFromTo(LED* leds, uint16_t len, uint32_t color, uint16_t from, uint16_t to);
+  void fillFromTo(LED* leds, range_t len, uint32_t color, range_t from, range_t to);
 
-  void fillFromTo(LED* leds, uint16_t len, const Color& color, uint16_t from, uint16_t to);
+  void fillFromTo(LED* leds, range_t len, const Color& color, range_t from, range_t to);
 
-  void fillFromTo(LED* leds, uint16_t len, uint8_t r, uint8_t g, uint8_t b, uint16_t from, uint16_t to);
+  void fillFromTo(LED* leds, range_t len, uint8_t r, uint8_t g, uint8_t b, range_t from, range_t to);
 
   Color hsv(uint16_t hue, uint8_t sat = 255u, uint8_t val = 255u);
 
   Color kelvin(uint16_t temp);
 
-  void show(const LED* leds, uint16_t len, uint8_t pin, uint8_t bright = 255, bool scale = true);
+  void show(const LED* leds, range_t len, uint8_t pin, uint8_t bright = 255);
 }
 
 #endif // _LED_H

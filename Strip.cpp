@@ -2,153 +2,142 @@
 
 namespace pix
 {
-  StripAllocate::StripAllocate() 
-  : StripInterface(255), 
-    leds{nullptr}, 
-    len{0u}
-  {}
-
-  StripAllocate::StripAllocate(uint16_t len, uint8_t pin, bool reverse)
-  : StripInterface(pin, reverse),
-    leds{new LED[len]}, 
-    len{len}
-  {}
+  StripAllocate::StripAllocate(range_t _len, uint8_t _pin, bool _reverse)
+      : StripInterface{128, reverse},
+        pin{pin},
+        leds{nullptr},
+        timer{millis()}
+  {
+    if (nullptr != leds)
+    {
+      delete[] leds;
+      leds = nullptr;
+    }
+    leds = new LED[_len];
+    if (nullptr == leds)
+      len = 0;
+    else
+      len = _len;
+  }
 
   StripAllocate::~StripAllocate()
   {
-    if (leds)
+    if (nullptr != leds)
     {
-      delete[]leds;
+      delete[] leds;
       leds = nullptr;
-      len = 0;
     }
   }
 
-  uint16_t StripAllocate::length() const
+  bool StripAllocate::updateLength(range_t newLen)
+  {
+    if (newLen == len)
+      return true;
+    if (nullptr != leds)
+    {
+      delete[] leds;
+      leds = nullptr;
+    }
+    leds = new LED[newLen];
+    if (nullptr == leds)
+    {
+      len = 0;
+      return false;
+    }
+    len = newLen;
+    return true;
+  }
+
+  void StripAllocate::begin()
+  {
+    pix::begin(pin);
+  }
+
+  void StripAllocate::clear()
+  {
+    pix::clear(leds, len);
+  }
+
+  LED &StripAllocate::operator[](range_t idx)
+  {
+    return led(idx);
+  }
+
+  const LED &StripAllocate::operator[](range_t idx) const
+  {
+    return led(idx);
+  }
+
+  LED &StripAllocate::led(range_t idx)
+  {
+    if (nullptr == leds || idx >= len)
+      return voidLED;
+    if (reverse)
+      return leds[len - 1 - idx];
+    return leds[idx];
+  }
+
+  const LED &StripAllocate::led(range_t idx) const
+  {
+    if (nullptr == leds || idx >= len)
+      return voidLED;
+    if (reverse)
+      return leds[len - 1 - idx];
+    return leds[idx];
+  }
+
+  range_t StripAllocate::length() const
   {
     return len;
   }
 
-  void StripAllocate::clear(void)
-  {
-    if (leds)
-    {
-      pix::clear(leds, len);
-    }
-  }
-
-  void StripAllocate::show()
-  {
-    pix::_extern_timer_show(leds, len, pin, timer, brightness);
-  }
-
-  void StripAllocate::show(uint8_t bright)
-  {
-    pix::_extern_timer_show(leds, len, pin, timer, bright);
-  }
-
   void StripAllocate::fill(uint8_t r, uint8_t g, uint8_t b)
   {
-    if (leds)
-    {
-      pix::fill(leds, len, r, g, b);
-    }
+    pix::fill(leds, len, r, g, b);
   }
 
   void StripAllocate::fill(uint32_t color)
   {
-    if (leds)
-    {
-      pix::fill(leds, len, color);
-    }
+    pix::fill(leds, len, color);
   }
 
-  void StripAllocate::fill(const Color& color)
+  void StripAllocate::fill(const Color &color)
   {
-    if (leds)
-    {
-      pix::fill(leds, len, color);
-    }
+    pix::fill(leds, len, color);
   }
 
-  void StripAllocate::fillFromTo(uint8_t r, uint8_t g, uint8_t b, uint16_t from, uint16_t to)
+  void StripAllocate::fillFromTo(uint8_t r, uint8_t g, uint8_t b, range_t from, range_t to)
   {
-    if (leds)
-    {
-      if (!reverse) return pix::fillFromTo(leds, len, r, g, b, from, to);
-      if (from > to || to >= len) return;
-      for (uint16_t i = len - 1 - from - to; i < len - from; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b;
-    }
+    if (!reverse)
+      pix::fillFromTo(leds, len, r, g, b, from, to);
+    if (from > to || to >= len)
+      return;
+    for (range_t i = len - 1 - from - to; i < len - from; ++i)
+      leds[i] = {r, g, b};
   }
 
-  void StripAllocate::fillFromTo(uint32_t color, uint16_t from, uint16_t to)
+  void StripAllocate::fillFromTo(uint32_t color, range_t from, range_t to)
   {
-    if (leds)
-    {
-      if (!reverse) return pix::fillFromTo(leds, len, color, from, to);
-      if (from > to || to >= len) return;
-      for (uint16_t i = len - 1 - from - to; i < len - from; ++i) leds[i] = color;
-    }
+    if (!reverse)
+      pix::fillFromTo(leds, len, color, from, to);
+    if (from > to || to >= len)
+      return;
+    for (range_t i = len - 1 - from - to; i < len - from; ++i)
+      leds[i] = color;
   }
 
-  void StripAllocate::fillFromTo(const pix::Color& color, uint16_t from, uint16_t to)
+  void StripAllocate::fillFromTo(const Color &color, range_t from, range_t to)
   {
-    if (leds)
-    {
-      if (!reverse) return pix::fillFromTo(leds, len, color, from, to);
-      if (from > to || to >= len) return;
-      for (uint16_t i = len - 1 - from - to; i < len - from; ++i) leds[i] = color;
-    }
+    if (!reverse)
+      pix::fillFromTo(leds, len, color, from, to);
+    if (from > to || to >= len)
+      return;
+    for (range_t i = len - 1 - from - to; i < len - from; ++i)
+      leds[i] = color;
   }
 
-  LED& StripAllocate::led(uint16_t i)
+  void StripAllocate::show(uint8_t tempBrightness)
   {
-    static LED voidPixel;
-    if (leds && i < len)
-    {
-      return reverse ? leds[len - 1 - i] : leds[i];
-    }
-    return voidPixel;
-  }
-
-  const LED& StripAllocate::led(uint16_t i) const
-  {
-    static LED voidPixel;
-    if (leds && i < len)
-    {
-      return reverse ? leds[len - 1 - i] : leds[i];
-    }
-    return voidPixel;
-  }
-
-  LED& StripAllocate::operator[](uint16_t i)
-  {
-    static LED voidPixel;
-    if (leds && i < len)
-    {
-      return reverse ? leds[len - 1 - i] : leds[i];
-    }
-    return voidPixel;
-  }
-
-  const LED& StripAllocate::operator[](uint16_t i) const
-  {
-    static LED voidPixel;
-    if (leds && i < len)
-    {
-      return reverse ? leds[len - 1 - i] : leds[i];
-    }
-    return voidPixel;
-  }
-
-  void StripAllocate::changeLength(uint16_t l)
-  {
-    if (l != len)
-    {
-      if (leds) delete[]leds;
-      leds = new LED[l];
-      if (!leds) len = 0u;
-      else len = l;
-    }
+    pix::_extern_timer_show(leds, len, pin, timer, tempBrightness);
   }
 }

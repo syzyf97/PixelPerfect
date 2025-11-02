@@ -5,11 +5,10 @@ static uint32_t endTime = 0u;
 
 namespace pix
 {
-  void _extern_timer_show(const LED* leds, uint16_t len, uint8_t pin, uint32_t& timer, uint8_t bright)
+  void _extern_timer_show(const LED* leds, range_t len, uint8_t pin, uint32_t& timer, uint8_t bright)
   {
     if (nullptr == leds) return;
-    if (len > 21845) return;
-    volatile uint16_t count = len * 3;
+    volatile range_t count = len * 3;
     volatile uint8_t *port = portOutputRegister(digitalPinToPort(pin));
     if (nullptr == port) return;
     uint8_t const pinMask = digitalPinToBitMask(pin);
@@ -186,7 +185,7 @@ namespace pix
     timer = micros();
   }
 
-  void show(const LED* leds, uint16_t len, uint8_t pin, uint8_t bright)
+  void show(const LED* leds, range_t len, uint8_t pin, uint8_t bright)
   {
     _extern_timer_show(leds, len, pin, endTime, bright);
   }

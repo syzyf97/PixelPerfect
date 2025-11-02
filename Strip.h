@@ -6,171 +6,161 @@
 namespace pix
 {
 
-  class StripInterface
+  extern void _extern_timer_show(const LED* leds, range_t len, uint8_t pin, uint32_t& timer, uint8_t bright);
+
+  static LED voidLED;
+
+  class StripInterface 
   {
+  protected:
+    StripInterface(uint8_t _b = 128, bool _r = false) : brightness{_b}, reverse{_r} {}
   public:
-    StripInterface(uint8_t pin, bool reverse = false)
-    : brightness{120}, pin{pin}, reverse{reverse}, timer{0ul} {}
     virtual ~StripInterface() = default;
     uint8_t brightness;
     bool reverse;
-    virtual uint16_t length() const = 0;
-    virtual void clear(void) = 0;
-    void begin(void) { pix::begin(pin); }
-    virtual void show(void) = 0;
-    virtual void show(uint8_t bright) = 0;
+    virtual void begin() = 0;
+    virtual void show() { show(brightness); }
+    virtual void show(uint8_t tempBrightness) = 0;
+    virtual void clear() = 0;
+    virtual range_t length() const = 0;
+    virtual LED& led(range_t idx) = 0;
+    virtual const LED& led(range_t idx) const = 0;
     virtual void fill(uint8_t r, uint8_t g, uint8_t b) = 0;
     virtual void fill(uint32_t color) = 0;
-    virtual void fill(const Color& color) = 0;
-    virtual void fillFromTo(uint8_t r, uint8_t g, uint8_t b, uint16_t from, uint16_t to) = 0;
-    virtual void fillFromTo(uint32_t color, uint16_t from, uint16_t to) = 0;
-    virtual void fillFromTo(const Color& color, uint16_t from, uint16_t to) = 0;
-    virtual LED& led(uint16_t i) = 0;
-    virtual const LED& led(uint16_t i) const = 0;
-    inline void setPin(uint8_t p) { pin = p; }
-    inline uint8_t getPin(void) const { return pin; }
+    virtual void fill(const LED& color) = 0;
+    virtual void fillFromTo(uint8_t r, uint8_t g, uint8_t b, range_t from, range_t to) = 0;
+    virtual void fillFromTo(uint32_t color, range_t from, range_t to) = 0;
+    virtual void fillFromTo(const LED& color, range_t from, range_t to) = 0;
+  };
 
-  protected:
+  using StripHandler = StripInterface*;
+
+  template<range_t PIX_COUNT>
+  class StripTemplate final : public StripInterface 
+  {
+  public:
+    StripTemplate(uint8_t _pin = 255, bool _reverse = false)
+    : StripInterface{128, _reverse}
+      pin{_pin},
+      timer{millis()}
+    {}
+    ~StripTemplate() {}
+
+    void begin() override 
+    {
+      pix::begin(pin);
+    }
+
+    void clear() override 
+    {
+      pix::clear(leds, PIX_COUNT);
+    }
+
+    void show(uint8_t tempBrightness) override 
+    {
+      _extern_timer_show(leds, PIX_COUNT, pin, timer, tempBrightness);
+    }
+
+    range_t length() const override { return PIX_COUNT; }
+
+    void fill(uint8_t r, uint8_t g, uint8_t b) override 
+    {
+      for (range_t i = 0; i < PIX_COUNT; ++i) leds[i] = {r, g, b};
+    }
+
+    LED& led(range_t idx) override 
+    {
+      if (idx >= PIX_COUNT) return voidLED;
+      if (reverse) return leds[PIX_COUNT - 1 - idx];
+      return leds[idx];
+    }
+
+    LED& operator[](range_t idx)
+    {
+      return led(idx);
+    }
+
+    const LED& led(range_t idx) const override
+    {
+      if (idx >= PIX_COUNT) return voidLED;
+      if (reverse) return leds[PIX_COUNT - 1 - idx];
+      return leds[idx];
+    }
+
+    const LED& operator[](range_t idx) const
+    {
+      return led(idx);
+    }
+
+    void fill(uint32_t color) override
+    {
+      fill((color >> 16) & 0xff, (color >> 8) & 0xff, color & 0xff);
+    }
+
+    void fill(const LED& color) override
+    {
+      fill(color.r, color.g, color.b);
+    }
+
+    void fillFromTo(uint8_t r, uint8_t g, uint8_t b, range_t from, range_t to) override
+    {
+      if (!reverse) return pix::fillFromTo(leds, PIX_COUNT, r, g, b, from, to);
+      if (from > to || to >= PIX_COUNT) return;
+      for (range_t i = PIX_COUNT - 1 - from - to; i < PIX_COUNT - from; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b;
+    }
+
+    void fillFromTo(uint32_t color, range_t from, range_t to) override
+    {
+      if (!reverse) return pix::fillFromTo(leds, PIX_COUNT, color, from, to);
+      if (from > to || to >= PIX_COUNT) return;
+      for (range_t i = PIX_COUNT - 1 - from - to; i < PIX_COUNT - from; ++i) leds[i] = color;
+    }
+
+    void fillFromTo(const Color& color, range_t from, range_t to) override
+    {
+      if (!reverse) return pix::fillFromTo(leds, PIX_COUNT, color, from, to);
+      if (from > to || to >= PIX_COUNT) return;
+      for (range_t i = PIX_COUNT - 1 - from - to; i < PIX_COUNT - from; ++i) leds[i] = color;
+    }
+
+  private:
+    uint8_t pin;
+    uint32_t timer;
+    LED leds[PIX_COUNT];
+  };
+
+  template<range_t S>
+  using Strip = StripTemplate<S>;
+
+
+  class StripAllocate final : public StripInterface
+  {
+  public:
+    StripAllocate(range_t _len = 0, uint8_t _pin = 255, bool _reverse = false);
+    ~StripAllocate();
+    bool updateLength(range_t newLen);
+    LED& operator[](range_t idx);
+    const LED& operator[](range_t idx) const;
+    LED& led(range_t idx) override;
+    const LED& led(range_t idx) const override;
+    void begin() override;
+    void clear() override;
+    range_t length() const override;
+    void fill(uint8_t r, uint8_t g, uint8_t b) override;
+    void fill(uint32_t color) override;
+    void fill(const Color& color) override;
+    void fillFromTo(uint8_t r, uint8_t g, uint8_t b, range_t from, range_t to) override;
+    void fillFromTo(uint32_t color, range_t from, range_t to) override;
+    void fillFromTo(const Color& color, range_t from, range_t to) override;
+    void show(uint8_t tempBrightness) override;
+
+  private:
+    range_t len;
+    LED* leds;
     uint8_t pin;
     uint32_t timer;
   };
 
-  extern void _extern_timer_show(const LED* leds, uint16_t len, uint8_t pin, uint32_t& timer, uint8_t bright = 255);
-
-  template<uint16_t len>
-  class StripTemplate final : public StripInterface
-  {
-  public:
-    StripTemplate(uint8_t pin = 255, bool reverse = false)
-    : StripInterface{pin, reverse} {}
-    uint16_t length() const override final { return len; }
-  
-    ~StripTemplate() override {}
-  
-    void clear(void) override
-    {
-      pix::clear(leds, len);
-    }
-
-    void show(void) override
-    {
-      pix::_extern_timer_show(leds, len, pin, timer, brightness);
-    }
-
-    void show(uint8_t bright) override
-    {
-      pix::_extern_timer_show(leds, len, pin, timer, bright);
-    }
-
-    void fill(uint8_t r, uint8_t g, uint8_t b) override
-    {
-      pix::fill(leds, len, r, g, b);
-    }
-  
-    void fill(uint32_t color) override
-    {
-      pix::fill(leds, len, color);
-    }
-  
-    void fill(const pix::Color& color) override
-    {
-      pix::fill(leds, len, color);
-    }
-  
-    void fillFromTo(uint8_t r, uint8_t g, uint8_t b, uint16_t from, uint16_t to) override
-    {
-      if (!reverse) return pix::fillFromTo(leds, len, r, g, b, from, to);
-      if (from > to || to >= len) return;
-      for (uint16_t i = len - 1 - from - to; i < len - from; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b;
-    }
-  
-    void fillFromTo(uint32_t color, uint16_t from, uint16_t to) override
-    {
-      if (!reverse) return pix::fillFromTo(leds, len, color, from, to);
-      if (from > to || to >= len) return;
-      for (uint16_t i = len - 1 - from - to; i < len - from; ++i) leds[i] = color;
-    }
-  
-    void fillFromTo(const pix::Color& color, uint16_t from, uint16_t to) override
-    {
-      if (!reverse) return pix::fillFromTo(leds, len, color, from, to);
-      if (from > to || to >= len) return;
-      for (uint16_t i = len - 1 - from - to; i < len - from; ++i) leds[i] = color;
-    }
-    
-    LED& led(uint16_t i) override
-    {
-      static pix::LED voidPixel;
-      if (i < len)
-      {
-        return reverse ? leds[len - 1 - i] : leds[i];
-      }
-      return voidPixel;
-    }
-    
-    const LED& led(uint16_t i) const override
-    {
-      static pix::LED voidPixel;
-      if (i < len)
-      {
-        return reverse ? leds[len - 1 - i] : leds[i];
-      }
-      return voidPixel;
-    }
-    
-    LED& operator[](uint16_t i)
-    {
-      static pix::LED voidPixel;
-      if (i < len)
-      {
-        return reverse ? leds[len - 1 - i] : leds[i];
-      }
-      return voidPixel;
-    }
-    const LED& operator[](uint16_t i) const
-    {
-      static pix::LED voidPixel;
-      if (i < len)
-      {
-        return reverse ? leds[len - 1 - i] : leds[i];
-      }
-      return voidPixel;
-    }
-  private:
-    pix::LED leds[len];
-  };
-  
-  class StripAllocate final : public StripInterface
-  {
-  public:
-    StripAllocate();
-    StripAllocate(uint16_t pixelCount, uint8_t pin = 255, bool reverse = false);
-    ~StripAllocate() override;
-    uint16_t length() const override;
-    void clear(void) override;
-    void show(void) override;
-    void show(uint8_t bright) override;
-    void fill(uint8_t r, uint8_t g, uint8_t b) override;
-    void fill(uint32_t color) override;
-    void fill(const Color& color) override;
-    void fillFromTo(uint8_t r, uint8_t g, uint8_t b, uint16_t from, uint16_t to) override;
-    void fillFromTo(uint32_t color, uint16_t from, uint16_t to) override;
-    void fillFromTo(const Color& color, uint16_t from, uint16_t to) override;
-    LED& led(uint16_t i) override;
-    const LED& led(uint16_t i) const override;
-    LED& operator[](uint16_t i);
-    const LED& operator[](uint16_t i) const;
-    void changeLength(uint16_t l);
-  
-  private:
-    pix::LED* leds;
-    uint16_t len;
-  };
-  
-  using StripHandler = StripInterface*;
-  
-  template<uint16_t S>
-  using Strip = StripTemplate<S>;
 }
 
 
