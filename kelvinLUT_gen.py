@@ -63,7 +63,7 @@ n_points = 256
 def printLUT(temperatures, wavelenghts, x_bar, y_bar, z_bar) -> None:
     print("#ifndef _COLOR_TEMP_TABLE_H")
     print("#define _COLOR_TEMP_TABLE_H\n")
-    print('#include "Arduino.h"\n')
+    print('#include "pix_platform.h"\n')
     print()
     print('#ifndef DISABLE_KELVIN_LUT')
     print()

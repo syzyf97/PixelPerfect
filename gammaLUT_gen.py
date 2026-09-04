@@ -13,7 +13,7 @@ def gammaCorrection(v: int) -> np.uint8:
 def printLUT() -> None:
     print("#ifndef _GAMMA_TABLE_LUT_H")
     print("#define _GAMMA_TABLE_LUT_H\n")
-    print('#include "Arduino.h"\n')
+    print('#include "pix_platform.h"\n')
     print('#ifndef DISABLE_GAMMA_LUT\n')
     print("const uint8_t PROGMEM __GAMMA8_TABLE[256] = {\n  ", end='')
     for i in range(256):

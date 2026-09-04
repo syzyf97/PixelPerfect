@@ -1,7 +1,7 @@
 #ifndef _GAMMA_TABLE_LUT_H
 #define _GAMMA_TABLE_LUT_H
 
-#include "Arduino.h"
+#include "pix_platform.h"
 
 #ifndef DISABLE_GAMMA_LUT
 

@@ -1,19 +1,19 @@
-#ifdef AVR
+#if defined(AVR) || defined(__AVR__)
 #include "LED.h"
 
 static uint32_t endTime = 0u;
 
 namespace pix
 {
-  void _extern_timer_show(const LED* leds, uint16_t len, uint8_t pin, uint32_t& timer, uint8_t bright)
+  // Byte-oriented seam: byteLen = pixels * bytes-per-pixel (3 for RGB, 4 for RGBW).
+  void _extern_timer_show(const uint8_t* bytes, uint16_t byteLen, uint8_t pin, uint32_t& timer, uint8_t bright)
   {
-    if (nullptr == leds) return;
-    if (len > 21845) return;
-    volatile uint16_t count = len * 3;
+    if (nullptr == bytes || byteLen == 0) return;
+    volatile uint16_t count = byteLen;
     volatile uint8_t *port = portOutputRegister(digitalPinToPort(pin));
     if (nullptr == port) return;
     uint8_t const pinMask = digitalPinToBitMask(pin);
-    volatile uint8_t *ptr = (volatile uint8_t*)leds;
+    volatile uint8_t *ptr = (volatile uint8_t*)bytes;
     volatile uint8_t hi = *port | pinMask, lo = *port & ~pinMask;
     volatile uint8_t color = *ptr++;
     color = (color * bright + color) >> 8; // fastScale
@@ -186,9 +186,9 @@ namespace pix
     timer = micros();
   }
 
-  void show(const LED* leds, uint16_t len, uint8_t pin, uint8_t bright)
+  void show(const LED* leds, uint16_t len, uint8_t pin, uint8_t bright, bool scale)
   {
-    _extern_timer_show(leds, len, pin, endTime, bright);
+    _extern_timer_show(reinterpret_cast<const uint8_t*>(leds), (uint16_t)(len * 3), pin, endTime, scale ? bright : 255);
   }
 }
 

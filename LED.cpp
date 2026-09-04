@@ -5,6 +5,8 @@
 
 namespace pix
 {
+  LED::LED() : g{0}, r{0}, b{0} {}
+
   LED::LED(uint32_t color) : g{(uint8_t(color >> 8))}, r{(uint8_t)(color >> 16)}, b{(uint8_t)color} {}
 
   LED::LED(uint8_t r, uint8_t g, uint8_t b) : g{g}, r{r}, b{b} {}
@@ -55,18 +57,81 @@ namespace pix
     return r != (uint8_t)(c >> 16) || g != (uint8_t)(c >> 8) || b != uint8_t(c);
   }
 
-  LED::operator uint32_t()
+  LED::operator uint32_t() const
   {
     return ((uint32_t)r << 16) | ((uint32_t)g << 8) | b;
   }
 
-  __attribute__((weak)) void _begin_periferials(void) {}
+  // ---- LEDW (RGBW) ---------------------------------------------------------
+
+  LEDW::LEDW() : g{0}, r{0}, b{0}, w{0} {}
+
+  // Packed form is 0xRRGGBBWW.
+  LEDW::LEDW(uint32_t color)
+  : g{(uint8_t)(color >> 16)}, r{(uint8_t)(color >> 24)}, b{(uint8_t)(color >> 8)}, w{(uint8_t)color} {}
+
+  LEDW::LEDW(uint8_t r, uint8_t g, uint8_t b, uint8_t w) : g{g}, r{r}, b{b}, w{w} {}
+
+  LEDW LED::toLEDW() const { return LEDW(r, g, b, 0); }
+
+  uint8_t& LEDW::operator[](uint8_t index)
+  {
+    static uint8_t void_part = 0u;
+    index %= 4;
+    switch (index)
+    {
+      case 0: return r;
+      case 1: return g;
+      case 2: return b;
+      case 3: return w;
+      default: return void_part;
+    }
+    return void_part;
+  }
+
+  LEDW& LEDW::operator=(const LEDW& other)
+  {
+    r = other.r, g = other.g, b = other.b, w = other.w;
+    return *this;
+  }
+
+  LEDW& LEDW::operator=(uint32_t c)
+  {
+    r = (uint8_t)(c >> 24), g = (uint8_t)(c >> 16), b = (uint8_t)(c >> 8), w = (uint8_t)c;
+    return *this;
+  }
+
+  bool LEDW::operator==(const LEDW& other) const
+  {
+    return r == other.r && g == other.g && b == other.b && w == other.w;
+  }
+
+  bool LEDW::operator==(uint32_t c) const
+  {
+    return r == (uint8_t)(c >> 24) && g == (uint8_t)(c >> 16) && b == (uint8_t)(c >> 8) && w == (uint8_t)c;
+  }
+
+  bool LEDW::operator!=(const LEDW& other) const { return !(*this == other); }
+
+  bool LEDW::operator!=(uint32_t c) const { return !(*this == c); }
+
+  LEDW::operator uint32_t() const
+  {
+    return ((uint32_t)r << 24) | ((uint32_t)g << 16) | ((uint32_t)b << 8) | w;
+  }
+
+  __attribute__((weak)) void _begin_periferials(uint8_t pin) { (void)pin; }
+
+  // Platforms without a shared-channel concept (AVR, ESP8266 - plain
+  // bit-banged GPIO) never fail to get one; ESP32/RP2040 override this with
+  // a real pool/limit check (see esp32_show.cpp / rp2040_show.cpp).
+  __attribute__((weak)) bool _extern_channel_ok(uint8_t pin) { (void)pin; return true; }
 
   void begin(uint8_t pin)
   {
     pinMode(pin, OUTPUT);
     digitalWrite(pin, LOW);
-    _begin_periferials();
+    _begin_periferials(pin);
   }
 
   static uint8_t gamma8(uint8_t i)
@@ -127,10 +192,53 @@ namespace pix
     for (uint16_t i = from; i <= to; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b;
   }
 
+  void fill(LEDW* leds, uint16_t len, uint32_t color_w)
+  {
+    if (leds == nullptr) return;
+    for (uint16_t i = 0; i < len; ++i) leds[i] = color_w;
+  }
+
+  void fill(LEDW* leds, uint16_t len, const ColorW& color_w)
+  {
+    if (leds == nullptr) return;
+    for (uint16_t i = 0; i < len; ++i) leds[i] = color_w;
+  }
+
+  void fill(LEDW* leds, uint16_t len, uint8_t r, uint8_t g, uint8_t b, uint8_t w)
+  {
+    if (leds == nullptr) return;
+    for (uint16_t i = 0; i < len; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b, leds[i].w = w;
+  }
+
+  void fillFromTo(LEDW* leds, uint16_t len, uint32_t color_w, uint16_t from, uint16_t to)
+  {
+    if (leds == nullptr || from > to || to >= len) return;
+    for (uint16_t i = from; i <= to; ++i) leds[i] = color_w;
+  }
+
+  void fillFromTo(LEDW* leds, uint16_t len, const ColorW& color_w, uint16_t from, uint16_t to)
+  {
+    if (leds == nullptr || from > to || to >= len) return;
+    for (uint16_t i = from; i <= to; ++i) leds[i] = color_w;
+  }
+
+  void fillFromTo(LEDW* leds, uint16_t len, uint8_t r, uint8_t g, uint8_t b, uint8_t w, uint16_t from, uint16_t to)
+  {
+    if (leds == nullptr || from > to || to >= len) return;
+    for (uint16_t i = from; i <= to; ++i) leds[i].r = r, leds[i].g = g, leds[i].b = b, leds[i].w = w;
+  }
+
   void clear(LED* leds, uint16_t len)
   {
     if (leds == nullptr) return;
     memset((uint8_t*)leds, 0, len * 3);
+  }
+
+  void scaleTo(uint8_t* dst, const uint8_t* src, uint16_t byteLen, uint8_t bright)
+  {
+    if (dst == nullptr || src == nullptr) return;
+    for (uint16_t i = 0; i < byteLen; ++i)
+      dst[i] = (uint8_t)(((uint16_t)src[i] * bright + src[i]) >> 8); // fastScale
   }
 
   Color hsv(uint16_t hue, uint8_t sat, uint8_t val)
@@ -218,5 +326,9 @@ namespace pix
     return rgb;
   #endif
   }
+
+  ColorW hsvW(uint16_t hue, uint8_t sat, uint8_t val) { return hsv(hue, sat, val).toLEDW(); }
+
+  ColorW kelvinW(uint16_t temp) { return kelvin(temp).toLEDW(); }
 
 }

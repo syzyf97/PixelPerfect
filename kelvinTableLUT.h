@@ -1,7 +1,7 @@
 #ifndef _COLOR_TEMP_TABLE_H
 #define _COLOR_TEMP_TABLE_H
 
-#include "Arduino.h"
+#include "pix_platform.h"
 
 
 #ifndef DISABLE_KELVIN_LUT
